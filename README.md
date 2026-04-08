@@ -1,1 +1,1 @@
-# Sztuczna_Inteligencja
+# Oliwier Bogdański 21181
