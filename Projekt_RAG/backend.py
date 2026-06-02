@@ -1,5 +1,4 @@
 import os
-# Blokady wątków
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['OPENBLAS_NUM_THREADS'] = '1'
@@ -15,7 +14,6 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# 1. Globalne ładowanie modeli (Tylko raz!)
 print("Ładowanie wektoryzatora (CPU)...")
 embedder = SentenceTransformer('paraphrase-multilingual-mpnet-base-v2', device='cpu')
 
@@ -30,7 +28,6 @@ else:
     metadata = []
     print("OSTRZEŻENIE: Brak bazy wektorowej.")
 
-# 2. Endpoint API do generowania odpowiedzi
 @app.route('/ask', methods=['POST'])
 def ask():
     data = request.json
@@ -42,7 +39,6 @@ def ask():
         return jsonify({"error": "Baza wiedzy nie jest gotowa."}), 500
 
     try:
-        # Wyszukiwanie FAISS
         question_embedding = embedder.encode(query, show_progress_bar=False)
         D, I = index.search(np.array([question_embedding]), k=5)
         chunks = [metadata[i] for i in I[0]]
@@ -59,7 +55,6 @@ Context:
 Main User Query: {query}
 Answer:"""
 
-        # Generowanie Ollama
         response = ollama.chat(
             model=selected_model,
             messages=[
@@ -81,5 +76,4 @@ Answer:"""
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Uruchomienie serwera na porcie 5000
     app.run(port=5000, threaded=False)
