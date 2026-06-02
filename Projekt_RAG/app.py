@@ -1,19 +1,24 @@
 import streamlit as st
 import requests
-import ollama 
+
 st.set_page_config(page_title="Ekspert NBA", page_icon="🏀", layout="wide")
-st.title("🏀 Lokalny Asystent NBA")
+st.title("🏀 Asystent NBA")
 st.markdown("Zadaj mi pytanie o zasady NBA, CBA lub wyniki Draft Combine!")
 
 with st.sidebar:
     st.header("⚙️ Ustawienia")
     
     try:
-        available_models = [m['name'] for m in ollama.list()['models']]
-        if not available_models:
-            available_models = ["Brak pobranych modeli"]
-    except Exception:
-        st.warning("Nie udało się połączyć z Ollamą. Czy aplikacja działa w tle?")
+        response = requests.get('http://localhost:11434/api/tags', timeout=2)
+        if response.status_code == 200:
+            data = response.json()
+            available_models = [model['name'] for model in data.get('models', [])]
+            if not available_models:
+                available_models = ["Brak pobranych modeli"]
+        else:
+            available_models = ["llama3.1:latest"]
+    except requests.exceptions.RequestException:
+        st.warning("Nie udało się połączyć z Ollamą (port 11434).")
         available_models = ["llama3.1:latest"]
         
     selected_model = st.selectbox("Wybierz model językowy:", available_models)
@@ -49,4 +54,4 @@ if prompt := st.chat_input("Napisz swoje pytanie tutaj..."):
                     st.error(f"Błąd backendu: {error_msg}")
             
             except requests.exceptions.ConnectionError:
-                st.error("Nie można połączyć się z serwerem AI. Upewnij się, że uruchomiłeś `backend.py` w innej konsoli!")
+                st.error("BŁĄD KRYTYCZNY: Nie działa serwer `backend.py`! Uruchom go w drugiej konsoli.")
